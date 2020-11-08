@@ -1,0 +1,37 @@
+http:
+  port: 8000
+admin:
+  port: 9876
+  host: localhost
+apiEndpoints:
+  borger:
+    host: localhost
+    paths: '/borger/*'
+serviceEndpoints:
+  borgerService:
+    url: 'http://localhost:8001'
+policies:
+  - basic-auth
+  - cors
+  - expression
+  - key-auth
+  - log
+  - oauth2
+  - proxy
+  - rate-limit
+  - rewrite
+pipelines:
+  borgerPipeline:
+    apiEndpoints:
+      - borger
+    policies:
+      - rewrite:
+          condition:
+            name: pathmatch
+            match: '/borger/:route*'
+          action:
+            rewrite: '/:route'
+      - proxy:
+          action:
+            serviceEndpoint: borgerService
+            changeOrigin: true
