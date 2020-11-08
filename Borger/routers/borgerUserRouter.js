@@ -3,6 +3,7 @@ const {dbLocation} = require('../config');
 const router = require('express').Router();
 
 const db = new sqlite3.Database(dbLocation);
+db.get("PRAGMA foreign_keys = ON");
 
 /**
  * A BorgerUser
