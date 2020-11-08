@@ -2,8 +2,8 @@ const express = require('express');
 const bodyParser = require('body-parser');
 const borgerUserRouter = require('./routers/borgerUserRouter');
 // const addressRouter = require('./routers/addressRouter');
+const {port} = require('./config');
 
-const port = 8001;
 const app = express();
 
 app.use(bodyParser.json());
