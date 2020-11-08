@@ -1,55 +1,62 @@
 const sqlite3 = require('sqlite3');
-const {dbLocation} = require('../config');
+const {dbLocation, port} = require('../config');
 const router = require('express').Router();
+const axios = require('axios');
 
 const db = new sqlite3.Database(dbLocation);
+db.get("PRAGMA foreign_keys = ON");
 
-// user create
+/**
+ * An Address
+ * @typedef {{id: number, borgerUserId: number, createdAt: Date, isValid: boolean}} Address
+ */
+
+// address create
 router.post('/', (req, res) => {
-    const {nemId, cpr, genderId, email} = req.body;
-
-    if (nemId === undefined || cpr === undefined || genderId === undefined || email === undefined) {
+    const {borgerUserId} = req.body;
+    if (borgerUserId === undefined) {
         return res.sendStatus(400);
     }
 
-    const query = `insert into main.User(NemId, Cpr, CreatedAt, ModifiedAt, GenderId, Email)
-                   values (?, ?, ?, ?, ?, ?)`;
-    db.run(query, [nemId, cpr, new Date(), new Date(), genderId, email], (err) => {
+    const query = `INSERT INTO main.Address(BorgerUserId)
+                   VALUES (?)`;
+    db.run(query, [borgerUserId], (err) => {
         if (err) {
             console.log(err);
-            return res.sendStatus(403);
+            if (err.errno === 19) { // SQLITE_CONSTRAINT
+                return res.status(400).send(`BorgerUser with id "${borgerUserId}" does not exist.`);
+            }
+            return res.sendStatus(500);
         }
 
-        console.log(`user '${cpr}' added`);
-        res.sendStatus(200);
+        console.log(`address for BorgerUser '${borgerUserId}' added`);
+        res.sendStatus(204);
     });
 });
 
-// user read all
+// address read all
 router.get('/', (req, res) => {
-    const query = `select *
-                   from main.User`;
+    const query = `SELECT *
+                   FROM main.Address`;
     db.all(query, (err, rows) => {
         if (err) {
             console.log(err);
-            return res.status(403).send();
+            return res.status(500).send();
         } else if (rows === 0) {
             return res.sendStatus(404);
         }
 
-        res.json({
-            'users': rows
-        })
+        res.json(rows);
     });
 });
 
-// user read one
+// address read one
 router.get('/:id', (req, res) => {
-    const query = `select * from main.User where Id=${req.params.id}`;
+    const query = `SELECT * FROM main.Address WHERE Id=${req.params.id}`;
     db.get(query, (err, row) => {
         if (err) {
             console.log(err);
-            return res.sendStatus(403);
+            return res.sendStatus(500);
         } else if (row === undefined) {
             return res.sendStatus(404);
         }
@@ -58,43 +65,66 @@ router.get('/:id', (req, res) => {
     });
 });
 
-// user update
-router.put('/:id', (req, res) => {
-    const {nemId, cpr, genderId, email} = req.body;
+// address update
+router.put('/:id', async (req, res) => {
+    const {borgerUserId} = req.body;
     const {id} = req.params;
 
-    if (nemId === undefined || cpr === undefined || genderId === undefined || email === undefined) {
+    if (borgerUserId === undefined) {
         return res.sendStatus(400);
     }
 
-    const query = `update main.User
-                   set NemId = ?,
-                       Cpr = ?,
-                       GenderId = ?,
-                       Email = ?
-                   where Id = ?`;
-    db.run(query, [nemId, cpr, genderId, email, id], (err) => {
+    try {
+        await axios.get(`http://localhost:${port}/address/${id}`);
+    } catch (e) {
+        console.log(e);
+        if (e.response.status === 404) {
+            console.log(`found no Address with id "${id}"`);
+            return res.sendStatus(404);
+        }
+        return res.sendStatus(500);
+    }
+
+    const query = `UPDATE main.Address
+                   SET BorgerUserId = ?
+                   WHERE Id = ?`;
+    db.run(query, [borgerUserId, id], (err) => {
         if (err) {
             console.log(err);
-            return res.sendStatus(403);
+            if (err.errno === 19) { // SQLITE_CONSTRAINT
+                return res.status(400).send(`BorgerUser with id "${borgerUserId}" does not exist.`);
+            }
+            return res.sendStatus(500);
         }
 
-        res.sendStatus(200);
+        res.sendStatus(204);
     });
 });
 
-// user delete
-router.delete('/:id', (req, res) => {
-    const query = `delete
-                   from main.User
-                   where Id = ?`;
+// address delete
+router.delete('/:id', async (req, res) => {
+    const {id} = req.params;
+    try {
+        await axios.get(`http://localhost:${port}/address/${id}`);
+    } catch (e) {
+        console.log(e);
+        if (e.response.status === 404) {
+            console.log(`found no Address with id "${id}"`);
+            return res.sendStatus(404);
+        }
+        return res.sendStatus(500);
+    }
+
+    const query = `DELETE
+                   FROM main.Address
+                   WHERE Id = ?`;
     db.run(query, [req.params.id], (err) => {
         if (err) {
             console.log(err);
-            return res.sendStatus(403);
+            return res.sendStatus(500);
         }
 
-        res.sendStatus(200);
+        res.sendStatus(204);
     });
 });
 
