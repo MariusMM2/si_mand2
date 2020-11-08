@@ -41,9 +41,7 @@ router.get('/', (req, res) => {
             return res.sendStatus(404);
         }
 
-        res.json({
-            'genders': rows
-        })
+        res.json(rows);
     });
 });
 
