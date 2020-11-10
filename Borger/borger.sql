@@ -13,6 +13,7 @@ CREATE TABLE Address
 (
     Id           INTEGER PRIMARY KEY AUTOINCREMENT,
     BorgerUserId INTEGER NOT NULL,
+    Address      TEXT NOT NULL, 
     CreatedAt    DATE             DEFAULT CURRENT_TIMESTAMP,
     IsValid      INTEGER NOT NULL DEFAULT TRUE,
     FOREIGN KEY (BorgerUserId) REFERENCES BorgerUser (Id) ON DELETE CASCADE
