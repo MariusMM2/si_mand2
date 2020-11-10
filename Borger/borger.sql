@@ -35,10 +35,10 @@ VALUES (0),
        (3),
        (4);
 
-INSERT INTO Address(BorgerUserId)
-VALUES (1),
-       (1),
-       (2),
-       (2),
-       (2),
-       (3);
+INSERT INTO Address(BorgerUserId, Address)
+VALUES (1, 'asd'),
+       (1, 'asd'),
+       (2, 'asd'),
+       (2, 'asd'),
+       (2, 'asd'),
+       (3, 'asd');
