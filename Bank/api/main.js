@@ -12,6 +12,7 @@ app.use(bodyParser.json());
 app.use(logging());
 app.use('/bankUser', bankUserRouter);
 app.use('/account', accountRouter);
+app.use('/', indexRouter);
 
 app.listen(port, () => {
     console.log(`listening on ${port}`);
