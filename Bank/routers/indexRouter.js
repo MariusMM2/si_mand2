@@ -98,4 +98,97 @@ router.get('/list-deposits', async (req, res) => {
     return res.send(depositList);
 })
 
+router.post('/create-loan', async (req, res) => {
+    const {bankUserId, loanAmount} = req.body;
+
+    if (bankUserId === undefined || loanAmount === undefined) {
+        console.log(`invalid parameters: bankUserId='${bankUserId}', loanAmount='${loanAmount}'`)
+        return res.sendStatus(400);
+    }
+
+    try {
+        await axios.get(`http://localhost:${port}/bankUser/${bankUserId}`);
+    } catch (e) {
+        console.error(e);
+        if (e.response.status === 404) {
+            console.log(`found no BankUser with id "${bankUserId}"`);
+            return res.sendStatus(400);
+        }
+        return res.sendStatus(500);
+    }
+
+    let account;
+    try {
+        // console.log(axiosResponse.data);
+        account = (await axios.get(`http://localhost:${port}/account`))
+            .data.filter(account => account.BankUserId === parseInt(bankUserId))[0];
+    } catch (e) {
+        console.error(e);
+        if (e.response.status === 404) {
+            console.log(`found no account for BankUser with id "${bankUserId}"`);
+            return res.sendStatus(400);
+        }
+        return res.sendStatus(500);
+    }
+
+    let resLoanAlgo;
+    try {
+        resLoanAlgo = await axios.post(`http://localhost:7071/api/LoanAlgo`, {
+            loanAmount: loanAmount,
+            accountAmount: account.Amount
+        });
+    } catch (e) {
+        const {status, data} = e.response;
+        if (status !== 403) {
+            console.log(e);
+            return res.sendStatus(500);
+        }
+        resLoanAlgo = {status, data};
+    }
+
+    if (resLoanAlgo.status === 403) {
+        return res.status(403).send(resLoanAlgo.data);
+    } else if (resLoanAlgo.status !== 200) {
+        return res.sendStatus(500);
+    }
+
+    const loanSelectQuery = "SELECT * FROM Loan WHERE BankUserId = ?";
+    const loanInsertQuery = "INSERT INTO Loan (BankUserId, Amount) VALUES (?, ?)";
+    const loanUpdateQuery = "UPDATE Loan SET Amount = ?, ModifiedAt = CURRENT_TIMESTAMP WHERE BankUserId = ?";
+
+    let loan;
+    try {
+        loan = await new Promise((resolve, reject) => {
+            db.get(loanSelectQuery, [bankUserId], (err, row) => {
+                if (err) {
+                    reject(new Error(err));
+                } else {
+                    resolve(row);
+                }
+            })
+        });
+    } catch (e) {
+        console.log(e);
+        return res.sendStatus(500);
+    }
+
+    if (loan === undefined) {
+        db.run(loanInsertQuery, [bankUserId, loanAmount], err => {
+            if (err) {
+                res.sendStatus(500);
+            } else {
+                res.sendStatus(204);
+            }
+        });
+    } else {
+        db.run(loanUpdateQuery, [loanAmount, bankUserId], err => {
+            if (err) {
+                res.sendStatus(500);
+            } else {
+                res.sendStatus(204);
+            }
+        });
+    }
+})
+
 module.exports = router;
