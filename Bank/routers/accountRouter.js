@@ -8,7 +8,7 @@ db.get("PRAGMA foreign_keys = ON");
 
 /**
  * An Account
- * @typedef {{id: number, bankUserId: number, acountNo: string, isStudent: boolean, createdAt: Date, modifiedAt: Date, interestRate: number, amount: number}} Account
+ * @typedef {{id: number, bankUserId: number, accountNo: string, isStudent: boolean, createdAt: Date, modifiedAt: Date, interestRate: number, amount: number}} Account
  */
 
 // account create
