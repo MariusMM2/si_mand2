@@ -59,4 +59,43 @@ router.post('/add-deposit', async (req, res) => {
     return res.sendStatus(204);
 })
 
+router.get('/list-deposits', async (req, res) => {
+    const {bankUserId} = req.body;
+
+    if (bankUserId === undefined) {
+        return res.sendStatus(400);
+    }
+
+    try {
+        await axios.get(`http://localhost:${port}/bankUser/${bankUserId}`);
+    } catch (e) {
+        console.error(e);
+        if (e.response.status === 404) {
+            console.log(`found no BankUser with id "${bankUserId}"`);
+            return res.sendStatus(400);
+        }
+        return res.sendStatus(500);
+    }
+
+    const depositsQuery = "SELECT * FROM Deposit WHERE BankUserId = ?";
+
+    let depositList;
+    try {
+        depositList = await new Promise((resolve, reject) => {
+            db.all(depositsQuery, [bankUserId], (err, rows) => {
+                if (err) {
+                    reject(new Error(err));
+                } else {
+                    resolve(rows);
+                }
+            })
+        });
+    } catch (e) {
+        console.log(e);
+        return res.sendStatus(500);
+    }
+
+    return res.send(depositList);
+})
+
 module.exports = router;
