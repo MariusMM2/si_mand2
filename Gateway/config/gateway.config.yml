@@ -7,9 +7,14 @@ apiEndpoints:
   borger:
     host: localhost
     paths: '/borger/*'
+  bank:
+    host: localhost
+    paths: '/bank/*'
 serviceEndpoints:
   borgerService:
     url: 'http://localhost:8001'
+  bankService:
+    url: 'http://localhost:8002'
 policies:
   - basic-auth
   - cors
@@ -25,6 +30,9 @@ pipelines:
     apiEndpoints:
       - borger
     policies:
+      - log:
+          - action:
+              message: ${req.method} ${req.originalUrl} ${res.statusCode}
       - rewrite:
           condition:
             name: pathmatch
@@ -34,4 +42,21 @@ pipelines:
       - proxy:
           action:
             serviceEndpoint: borgerService
+            changeOrigin: true
+  bankPipeline:
+    apiEndpoints:
+      - bank
+    policies:
+      - log:
+          - action:
+              message: ${req.method} ${req.originalUrl} ${res.statusCode}
+      - rewrite:
+          condition:
+            name: pathmatch
+            match: '/bank/:route*'
+          action:
+            rewrite: '/:route'
+      - proxy:
+          action:
+            serviceEndpoint: bankService
             changeOrigin: true
