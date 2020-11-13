@@ -287,4 +287,46 @@ router.put('/pay-loan', async (req, res) => {
     }
 })
 
+router.get('/list-loans', async (req, res) => {
+    const {bankUserId} = req.body;
+
+    if (bankUserId === undefined) {
+        return res.sendStatus(400);
+    }
+
+    try {
+        await axios.get(`http://localhost:${port}/bankUser/${bankUserId}`);
+    } catch (e) {
+        console.error(e);
+        if (e.response.status === 404) {
+            console.log(`found no BankUser with id "${bankUserId}"`);
+            return res.sendStatus(400);
+        }
+        return res.sendStatus(500);
+    }
+
+    const loansQuery = "SELECT * FROM Loan WHERE BankUserId = ? AND Amount > 0";
+    let loanList;
+    try {
+        loanList = await new Promise((resolve, reject) => {
+            db.all(loansQuery, [bankUserId], (err, rows) => {
+                if (err) {
+                    reject(new Error(err));
+                } else {
+                    resolve(rows);
+                }
+            })
+        });
+    } catch (e) {
+        console.error(e);
+        if (e.response.status === 404) {
+            console.log(`found no Loans for BankUser with id "${bankUserId}"`);
+            return res.sendStatus(400);
+        }
+        return res.sendStatus(500);
+    }
+
+    return res.send(loanList);
+});
+
 module.exports = router;
