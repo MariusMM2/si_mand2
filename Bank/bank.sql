@@ -16,7 +16,7 @@ CREATE TABLE BankUser
 CREATE TABLE Loan
 (
     Id INTEGER PRIMARY KEY AUTOINCREMENT,
-    BankUserId INTEGER NOT NULL UNIQUE,
+    BankUserId INTEGER NOT NULL,
     CreatedAt DATE DEFAULT CURRENT_TIMESTAMP,
     ModifiedAt DATE DEFAULT CURRENT_TIMESTAMP,
     Amount INTEGER NOT NULL,
@@ -50,7 +50,7 @@ INSERT INTO BankUser (UserId)
 VALUES (0), (1), (2), (3);
 
 INSERT INTO Loan (BankUserId, Amount)
-VALUES (1, 100), (2, 340), (3, 950);
+VALUES (1, 100), (1, 200), (1, 500), (2, 300), (2, 340), (3, 950);
 
 INSERT INTO Deposit (BankUserId, Amount)
 VALUES (1, 60), (1, 950), (2, 52), (2, 591);
