@@ -329,4 +329,38 @@ router.get('/list-loans', async (req, res) => {
     return res.send(loanList);
 });
 
+router.patch('/withdraw-money', async (req, res) => {
+    if (req.body.userId === undefined || req.body.amount === undefined) {
+        return res.sendStatus(400);
+    }
+
+    const amount = req.body.amount;
+    const userId = parseInt(req.body.userId);
+
+    const bankUser = (await axios.get(`http://localhost:${port}/bankUser`))
+        .data.filter(bankUser => bankUser.UserId === userId)[0];
+    if (bankUser === undefined) {
+        return res.status(404).send(`No BankUser found for User with id '${userId}'`);
+    }
+
+    const account = (await axios.get(`http://localhost:${port}/account`))
+        .data.filter(account => account.BankUserId === bankUser.Id)[0];
+    if (account === undefined) {
+        return res.status(404).send(`No Account found for User with id '${userId}'`);
+    }
+
+    if (account.Amount < amount) {
+        return res.status(403).send("Not enough money in account to withdraw");
+    }
+
+    const accountUpdateQuery = "UPDATE Account SET Amount = ?, ModifiedAt = CURRENT_TIMESTAMP WHERE Id = ?";
+    db.run(accountUpdateQuery, [account.Amount - amount, account.Id], err => {
+        if(err) {
+            res.sendStatus(500);
+        } else {
+            res.sendStatus(204);
+        }
+    });
+});
+
 module.exports = router;
