@@ -66,7 +66,7 @@ router.get('/:id', (req, res) => {
 });
 
 // address update
-router.put('/:id', async (req, res) => {
+router.patch('/:id', async (req, res) => {
     const {borgerUserId} = req.body;
     const {id} = req.params;
 

@@ -61,7 +61,7 @@ router.get('/:id', (req, res) => {
 });
 
 // borgerUser update
-router.put('/:id', (req, res) => {
+router.patch('/:id', (req, res) => {
     if (req.body.userId === undefined) {
         return res.sendStatus(400);
     }

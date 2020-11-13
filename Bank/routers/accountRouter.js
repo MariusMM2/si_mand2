@@ -66,7 +66,7 @@ router.get('/:id', (req, res) => {
 });
 
 // account update
-router.put('/:id', async (req, res) => {
+router.patch('/:id', async (req, res) => {
     const {bankUserId, accountNo, isStudent, interestRate, amount} = req.body;
     const {id} = req.params;
 
