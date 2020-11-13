@@ -191,4 +191,100 @@ router.post('/create-loan', async (req, res) => {
     }
 })
 
+router.put('/pay-loan', async (req, res) => {
+    const {bankUserId, loanId} = req.body;
+
+    if (bankUserId === undefined || loanId === undefined) {
+        return res.sendStatus(400);
+    }
+
+    let bankUser;
+    try {
+        bankUser = (await axios.get(`http://localhost:${port}/bankUser/${bankUserId}`)).data;
+    } catch (e) {
+        if (e.response.status === 404) {
+            return res.status(404).send(`BankUser with id '${bankUserId}' not found`);
+        } else {
+            console.log(e);
+            return res.sendStatus(500);
+        }
+    }
+
+    const loanQuery = "SELECT * FROM Loan WHERE Id = ?";
+    let loan;
+    try {
+        loan = await new Promise((resolve, reject) => {
+            db.get(loanQuery, [loanId], (err, row) => {
+                if (err) {
+                    reject(err);
+                } else {
+                    if (row === undefined) {
+                        reject(404);
+                    } else {
+                        resolve(row);
+                    }
+                }
+            });
+        })
+    } catch (e) {
+        if (e.reason === 404) {
+            return res.status(404).send(`Loan with id '${loanId}' not found`);
+        } else {
+            console.log(e);
+            return res.sendStatus(500);
+        }
+    }
+
+    if (loan.BankUserId !== bankUser.Id) {
+        return res.status(403).send("Loan belongs to a different BankUser");
+    }
+
+    const accountQuery = "SELECT * FROM Account WHERE BankUserId = ?";
+    let account;
+    try {
+        account = await new Promise((resolve, reject) => {
+            db.get(accountQuery, [bankUserId], (err, row) => {
+                if (err) {
+                    reject(err);
+                } else {
+                    if (row === undefined) {
+                        reject(404);
+                    } else {
+                        resolve(row);
+                    }
+                }
+            });
+        });
+    } catch (e) {
+        if (e === 404) {
+            return res.status(404).send(`Account for BankUser with id '${bankUserId}' not found`);
+        } else {
+            console.log(e);
+            return res.sendStatus(500);
+        }
+    }
+
+    if (account.Amount < loan.Amount) {
+        return res.status(403).send("Not enough money in account to pay loan");
+    }
+
+    const accountUpdateQuery = `UPDATE Account
+                                SET Amount     = ?,
+                                    ModifiedAt = CURRENT_TIMESTAMP
+                                WHERE Id = ?`;
+    const loanUpdateQuery = `UPDATE Loan
+                             SET Amount     = 0,
+                                 ModifiedAt = CURRENT_TIMESTAMP
+                             WHERE Id = ?;`;
+
+    try {
+        await db.run(accountUpdateQuery, [account.Amount - loan.Amount, account.Id]);
+        await db.run(loanUpdateQuery, [loan.Id]);
+        res.sendStatus(204);
+    } catch (e) {
+        console.log(e);
+        res.sendStatus(500);
+    }
+})
+
 module.exports = router;
