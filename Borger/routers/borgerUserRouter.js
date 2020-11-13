@@ -75,7 +75,7 @@ router.patch('/:id', (req, res) => {
             return res.sendStatus(500);
         }
 
-        res.sendStatus(204);
+        res.sendStatus(201);
     });
 });
 

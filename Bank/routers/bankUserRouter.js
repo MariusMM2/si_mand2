@@ -25,7 +25,7 @@ router.post('/', (req, res) => {
         }
 
         console.log(`bankUser '${req.body.userId}' added`);
-        res.sendStatus(204);
+        res.sendStatus(201);
     });
 });
 

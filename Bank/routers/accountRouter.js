@@ -30,7 +30,7 @@ router.post('/', (req, res) => {
         }
 
         console.log(`account for  '${bankUserId}' added`);
-        res.sendStatus(204);
+        res.sendStatus(201);
     });
 });
 

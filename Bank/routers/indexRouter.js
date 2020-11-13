@@ -56,7 +56,7 @@ router.post('/add-deposit', async (req, res) => {
         return res.sendStatus(500);
     }
 
-    return res.sendStatus(204);
+    return res.sendStatus(201);
 })
 
 router.get('/list-deposits', async (req, res) => {

@@ -30,7 +30,7 @@ router.post('/', (req, res) => {
         }
 
         console.log(`address for BorgerUser '${borgerUserId}' added`);
-        res.sendStatus(204);
+        res.sendStatus(201);
     });
 });
 
