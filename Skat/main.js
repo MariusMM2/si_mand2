@@ -12,8 +12,8 @@ app.use(bodyParser.json());
 
 app.use(logging());
 app.use('/', indexRouter);
-app.use('/user', skatUserRouter);
-app.use('/year', skatYearRouter);
+app.use('/skatUser', skatUserRouter);
+app.use('/skatYear', skatYearRouter);
 
 app.listen(port, () => {
     console.log(`listening on ${port}`);
