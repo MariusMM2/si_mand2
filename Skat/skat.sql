@@ -30,8 +30,8 @@ CREATE TABLE SkatUserYear
     UserId     INTEGER NOT NULL,
     IsPaid     BOOLEAN NOT NULL DEFAULT FALSE,
     Amount     INTEGER NOT NULL DEFAULT 0,
-    FOREIGN KEY (SkatUserId) REFERENCES SkatUser (Id),
-    FOREIGN KEY (SkatYearId) REFERENCES SkatYear (Id)
+    FOREIGN KEY (SkatUserId) REFERENCES SkatUser (Id) ON DELETE CASCADE,
+    FOREIGN KEY (SkatYearId) REFERENCES SkatYear (Id) ON DELETE CASCADE
 );
 
 CREATE TRIGGER create_user_years
