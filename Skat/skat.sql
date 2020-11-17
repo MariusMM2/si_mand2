@@ -40,7 +40,18 @@ CREATE TRIGGER create_user_years
     FOR EACH ROW
 BEGIN
     INSERT INTO SkatUserYear(SkatUserId, SkatYearId, UserId)
-    SELECT SkatUser.Id, NEW.Id, SkatUser.UserId FROM SkatUser;
+    SELECT SkatUser.Id, NEW.Id, SkatUser.UserId
+    FROM SkatUser;
+END;
+
+CREATE TRIGGER post_update_amount
+    AFTER UPDATE
+    ON SkatUserYear
+    FOR EACH ROW
+BEGIN
+    UPDATE SkatUserYear
+    SET IsPaid = NEW.Amount > 0
+    WHERE Id = NEW.Id;
 END;
 
 INSERT INTO SkatUser (UserId)
@@ -54,3 +65,5 @@ VALUES (STRFTIME('%Y', 'now'), DATE('now', '+1 month', 'start of month'),
         DATE('now', '+1 month', 'start of month', '+1 year')),
        ('2019', DATE('2019-04-01'), DATE('2020-04-01')),
        ('2018', DATE('2018-04-01'), DATE('2019-04-01'));
+
+UPDATE SkatUserYear SET Amount = 100 WHERE Id = 1;

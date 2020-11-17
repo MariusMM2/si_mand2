@@ -334,8 +334,12 @@ router.patch('/withdraw-money', async (req, res) => {
         return res.sendStatus(400);
     }
 
-    const amount = req.body.amount;
+    const amount = parseInt(req.body.amount);
     const userId = parseInt(req.body.userId);
+
+    if (isNaN(amount)) {
+        return res.status(400).send("NaN value for 'amount'");
+    }
 
     const bankUser = (await axios.get(`http://localhost:${port}/bankUser`))
         .data.filter(bankUser => bankUser.UserId === userId)[0];
@@ -350,7 +354,7 @@ router.patch('/withdraw-money', async (req, res) => {
     }
 
     if (account.Amount < amount) {
-        return res.status(403).send("Not enough money in account to withdraw");
+        return res.status(403).send(`Not enough money in account to withdraw ('${account.Amount}' < '${amount}')`);
     }
 
     const accountUpdateQuery = "UPDATE Account SET Amount = ?, ModifiedAt = CURRENT_TIMESTAMP WHERE Id = ?";
