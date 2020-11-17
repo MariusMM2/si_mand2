@@ -10,11 +10,16 @@ apiEndpoints:
   bank:
     host: localhost
     paths: '/bank/*'
+  skat:
+    host: localhost
+    paths: '/skat/*'
 serviceEndpoints:
   borgerService:
     url: 'http://localhost:8001'
   bankService:
     url: 'http://localhost:8002'
+  skatService:
+    url: 'http://localhost:8003'
 policies:
   - basic-auth
   - cors
@@ -59,4 +64,21 @@ pipelines:
       - proxy:
           action:
             serviceEndpoint: bankService
+            changeOrigin: true
+  skatPipeline:
+    apiEndpoints:
+      - skat
+    policies:
+      - log:
+          - action:
+              message: ${req.method} ${req.originalUrl} ${res.statusCode}
+      - rewrite:
+          condition:
+            name: pathmatch
+            match: '/skat/:route*'
+          action:
+            rewrite: '/:route'
+      - proxy:
+          action:
+            serviceEndpoint: skatService
             changeOrigin: true
