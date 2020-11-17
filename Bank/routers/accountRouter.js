@@ -70,7 +70,7 @@ router.patch('/:id', async (req, res) => {
     const {bankUserId, accountNo, isStudent, interestRate, amount} = req.body;
     const {id} = req.params;
 
-    if (bankUserId === undefined || accountNo === undefined || isStudent === undefined || interestRate === undefined || amount === undefined) {
+    if (bankUserId === accountNo === isStudent === interestRate === amount === undefined) {
         return res.sendStatus(400);
     }
 
@@ -85,10 +85,34 @@ router.patch('/:id', async (req, res) => {
         return res.sendStatus(500);
     }
 
-    const query = `UPDATE main.Account
-                   SET BankUserId = ?, AccountNo = ?, IsStudent = ?, ModifiedAt = CURRENT_TIMESTAMP, InterestRate = ?, Amount = ?
-                   WHERE Id = ?`;
-    db.run(query, [bankUserId, accountNo, isStudent, interestRate, amount, id], (err) => {
+    let query = "UPDATE main.Account SET ModifiedAt = CURRENT_TIMESTAMP";
+    let args = [];
+
+    if (bankUserId !== undefined) {
+        query += ', BankUserId = ?';
+        args.push(bankUserId);
+    }
+    if (accountNo !== undefined) {
+        query += `, AccountNo = ?`;
+        args.push(accountNo);
+    }
+    if (isStudent !== undefined) {
+        query += `, IsStudent = ?`;
+        args.push(isStudent === 'true');
+    }
+    if (interestRate !== undefined) {
+        query += `, InterestRate = ?`;
+        args.push(parseFloat(interestRate));
+    }
+    if (amount !== undefined) {
+        query += `, Amount = ?`;
+        args.push(parseInt(amount));
+    }
+
+    query += ' WHERE Id = ?';
+    args.push(id);
+
+    db.run(query, args, (err) => {
         if (err) {
             console.log(err);
             if (err.errno === 19) { // SQLITE_CONSTRAINT

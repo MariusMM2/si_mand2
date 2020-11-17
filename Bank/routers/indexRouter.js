@@ -191,7 +191,7 @@ router.post('/create-loan', async (req, res) => {
     }
 })
 
-router.put('/pay-loan', async (req, res) => {
+router.post('/pay-loan', async (req, res) => {
     const {bankUserId, loanId} = req.body;
 
     if (bankUserId === undefined || loanId === undefined) {
@@ -353,6 +353,7 @@ router.patch('/withdraw-money', async (req, res) => {
         return res.status(404).send(`No Account found for User with id '${userId}'`);
     }
 
+    console.log(account);
     if (account.Amount < amount) {
         return res.status(403).send(`Not enough money in account to withdraw ('${account.Amount}' < '${amount}')`);
     }
