@@ -13,14 +13,14 @@ db.get("PRAGMA foreign_keys = ON");
 
 // address create
 router.post('/', (req, res) => {
-    const {borgerUserId} = req.body;
-    if (borgerUserId === undefined) {
+    const {borgerUserId, address} = req.body;
+    if (borgerUserId === undefined || address === undefined) {
         return res.sendStatus(400);
     }
 
-    const query = `INSERT INTO main.Address(BorgerUserId)
-                   VALUES (?)`;
-    db.run(query, [borgerUserId], (err) => {
+    const query = `INSERT INTO main.Address(BorgerUserId, Address)
+                   VALUES (?, ?)`;
+    db.run(query, [borgerUserId, address], (err) => {
         if (err) {
             console.log(err);
             if (err.errno === 19) { // SQLITE_CONSTRAINT
@@ -67,10 +67,10 @@ router.get('/:id', (req, res) => {
 
 // address update
 router.patch('/:id', async (req, res) => {
-    const {borgerUserId} = req.body;
+    const {borgerUserId, address, isValid} = req.body;
     const {id} = req.params;
 
-    if (borgerUserId === undefined) {
+    if (borgerUserId === address === isValid === undefined) {
         return res.sendStatus(400);
     }
 
@@ -85,10 +85,28 @@ router.patch('/:id', async (req, res) => {
         return res.sendStatus(500);
     }
 
-    const query = `UPDATE main.Address
-                   SET BorgerUserId = ?
-                   WHERE Id = ?`;
-    db.run(query, [borgerUserId, id], (err) => {
+    let query = "UPDATE main.Address";
+    let args = [];
+
+    if (borgerUserId !== undefined) {
+        query += ' SET BorgerUserId = ?';
+        args.push(borgerUserId);
+    }
+    if (address !== undefined) {
+        query += `${args.length === 0 ? ' SET' : ','} Address = ?`;
+        args.push(address);
+    }
+    if (isValid !== undefined) {
+        query += `${args.length === 0 ? ' SET' : ','} IsValid = ?`;
+        args.push(isValid === 'true');
+    }
+
+    query += ' WHERE Id = ?';
+    args.push(req.params.id);
+
+    console.log(query);
+
+    db.run(query, args, (err) => {
         if (err) {
             console.log(err);
             if (err.errno === 19) { // SQLITE_CONSTRAINT

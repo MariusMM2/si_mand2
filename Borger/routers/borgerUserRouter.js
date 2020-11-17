@@ -15,8 +15,8 @@ router.post('/', (req, res) => {
     if (req.body.userId === undefined) {
         return res.sendStatus(400);
     }
-    const query = `insert into main.BorgerUser(UserId)
-                   values (?)`;
+    const query = `INSERT INTO main.BorgerUser(UserId)
+                   VALUES (?)`;
     console.log(query);
     db.run(query, [req.body.userId], (err) => {
         if (err) {
@@ -31,8 +31,8 @@ router.post('/', (req, res) => {
 
 // borgerUser read all
 router.get('/', (req, res) => {
-    const query = `select *
-                   from main.BorgerUser`;
+    const query = `SELECT *
+                   FROM main.BorgerUser`;
     db.all(query, (err, rows) => {
         if (err) {
             console.log(err);
@@ -47,7 +47,7 @@ router.get('/', (req, res) => {
 
 // borgerUser read one
 router.get('/:id', (req, res) => {
-    const query = `select * from main.BorgerUser where Id=${req.params.id}`;
+    const query = `SELECT * FROM main.BorgerUser WHERE Id=${req.params.id}`;
     db.get(query, (err, row) => {
         if (err) {
             console.log(err);
@@ -66,24 +66,24 @@ router.patch('/:id', (req, res) => {
         return res.sendStatus(400);
     }
 
-    const query = `update main.BorgerUser
-                   set UserId = ?
-                   where Id = ?`;
+    const query = `UPDATE main.BorgerUser
+                   SET UserId = ?
+                   WHERE Id = ?`;
     db.run(query, [req.body.userId, req.params.id], (err) => {
         if (err) {
             console.log(err);
             return res.sendStatus(500);
         }
 
-        res.sendStatus(201);
+        res.sendStatus(204);
     });
 });
 
 // borgerUser delete
 router.delete('/:id', (req, res) => {
-    const query = `delete
-                   from main.BorgerUser
-                   where Id = ?`;
+    const query = `DELETE
+                   FROM main.BorgerUser
+                   WHERE Id = ?`;
     db.run(query, [req.params.id], (err) => {
         if (err) {
             console.log(err);
