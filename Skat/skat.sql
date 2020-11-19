@@ -65,3 +65,5 @@ VALUES (STRFTIME('%Y', 'now'), DATE('now', '+1 month', 'start of month'),
         DATE('now', '+1 month', 'start of month', '+1 year')),
        ('2019', DATE('2019-04-01'), DATE('2020-04-01')),
        ('2018', DATE('2018-04-01'), DATE('2019-04-01'));
+
+UPDATE SkatUserYear SET Amount = 100;
