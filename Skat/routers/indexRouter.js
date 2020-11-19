@@ -13,39 +13,62 @@ router.post('/pay-taxes', async (req, res) => {
         return res.sendStatus(400);
     }
 
-    const userYearSelectQuery = "SELECT * FROM SkatUserYear WHERE UserId = ?";
+    /**
+     * A SkatUserYearSkatYearJoin
+     * @typedef {{Id: number, StartDate: Date, EndDate: Date}} SkatUserYearSkatYearJoin
+     */
+    const userYearsSelectQuery = `
+        SELECT SkatUserYear.Id, SkatYear.StartDate, SkatYear.EndDate
+        FROM SkatUserYear
+                 JOIN SkatYear ON SkatYear.Id = SkatUserYear.SkatYearId
+        WHERE UserId = ?
+          AND IsPaid = FALSE`;
 
-    let skatUserYear;
+    let skatUserYears;
     try {
-        skatUserYear = await new Promise((resolve, reject) => {
-            db.get(userYearSelectQuery, [userId], (err, row) => {
+        skatUserYears = await new Promise((resolve, reject) => {
+            db.all(userYearsSelectQuery, [userId], (err, rows) => {
                 if (err) {
                     reject(err);
                 } else {
-                    if (row === undefined) {
-                        reject(404);
-                    } else {
-                        resolve(row);
-                    }
+                    resolve(rows);
                 }
             });
         });
     } catch (e) {
         console.log("skatUserYearSelectQuery");
         console.log(e);
-        if (e === 404) {
-            return res.status(404).send(`SkatUserYear for user '${userId}' not found`);
-        } else if (e.response) {
+        if (e.response) {
             console.log(e.response);
             return res.status(e.response.status).send(e.response.data);
         } else {
-            console.log(e);
             return res.sendStatus(500);
         }
     }
 
-    if (skatUserYear.Amount >= 0) {
-        return res.status(403).send("No taxes need to be paid by this User.");
+    if (skatUserYears === undefined || skatUserYears.length === 0) {
+        return res.status(403).send(`No unpaid tax years found for user '${userId}'`);
+    }
+
+    let skatUserYear = undefined;
+
+    for (let i = 0; i < skatUserYears.length; i++) {
+        const skatYear = skatUserYears[i];
+
+        const currentDate = new Date();
+        const startDate = new Date(skatYear.StartDate);
+        const endDate = new Date(skatYear.EndDate);
+
+        if (currentDate.getTime() > startDate.getTime() &&
+            currentDate.getTime() < endDate.getTime()) {
+            skatUserYear = skatYear;
+            break;
+        }
+    }
+
+    if (skatUserYear === undefined) {
+        console.log("'skatUserYear' cannot be undefined");
+        return res.sendStatus(500);
     }
 
     let taxAmount;
@@ -55,16 +78,18 @@ router.post('/pay-taxes', async (req, res) => {
     } catch (e) {
         console.log("taxAmount");
         console.log(e);
+        return res.sendStatus(500);
     }
 
     const skatUserYearUpdateQuery = `UPDATE SkatUserYear
-                                     SET Amount = ?
+                                     SET IsPaid = TRUE,
+                                         Amount = ?
                                      WHERE Id = ?`;
 
     try {
         await axios.patch('http://localhost:8000/bank/withdraw-money', {userId: userId, amount: taxAmount});
         await new Promise((resolve, reject) => {
-            db.run(skatUserYearUpdateQuery, [skatUserYear.Amount + taxAmount, skatUserYear.Id], err => {
+            db.run(skatUserYearUpdateQuery, [taxAmount, skatUserYear.Id], err => {
                 if (err) {
                     reject(err);
                 } else {

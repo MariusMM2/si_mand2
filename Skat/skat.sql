@@ -44,16 +44,6 @@ BEGIN
     FROM SkatUser;
 END;
 
-CREATE TRIGGER post_update_amount
-    AFTER UPDATE
-    ON SkatUserYear
-    FOR EACH ROW
-BEGIN
-    UPDATE SkatUserYear
-    SET IsPaid = NEW.Amount > 0
-    WHERE Id = NEW.Id;
-END;
-
 INSERT INTO SkatUser (UserId)
 VALUES (0),
        (1),
@@ -65,5 +55,3 @@ VALUES (STRFTIME('%Y', 'now'), DATE('now', '+1 month', 'start of month'),
         DATE('now', '+1 month', 'start of month', '+1 year')),
        ('2019', DATE('2019-04-01'), DATE('2020-04-01')),
        ('2018', DATE('2018-04-01'), DATE('2019-04-01'));
-
-UPDATE SkatUserYear SET Amount = 100;
